@@ -1,0 +1,9 @@
+{
+  "name": "oracle-invoice-generator",
+  "version": "1.0.0",
+  "description": "Oracle Invoice Generator for Exergy Designs - Monochrome Business Intelligence Theme",
+  "private": true,
+  "scripts": {
+    "start": "npx serve ."
+  }
+}

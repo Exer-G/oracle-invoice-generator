@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Invoice | Exergy Designs</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23000' rx='15' width='100' height='100'/><text x='50' y='68' font-size='50' font-family='system-ui' font-weight='700' fill='%23fff' text-anchor='middle'>Ex</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-icon" style="width:48px;height:48px;font-size:18px;"><span>Ex</span></div>
+            </div>
+            <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;color:var(--grey-900);">Oracle Invoice</h2>
+            <p style="margin:0 0 24px;font-size:13px;color:var(--grey-500);">Sign in to sync across devices</p>
+            <button class="btn btn-primary login-google-btn" onclick="signInWithGoogle()" id="googleSignInBtn">
+                <svg viewBox="0 0 24 24" width="18" height="18" style="margin-right:8px;"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign in with Google
+            </button>
+            <button class="btn btn-secondary" onclick="skipLogin()" style="margin-top:8px;width:100%;font-size:12px;color:var(--grey-500);">
+                Continue without sync
+            </button>
+        </div>
+    </div>
+
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"><span>Ex</span></div>
+                    <div class="logo-text">
+                        <h1>Oracle</h1>
+                        <span>Invoice Generator</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Overview</div>
+                    <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        Dashboard
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Business</div>
+                    <a class="nav-item" data-page="invoices" onclick="showPage('invoices')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Invoices
+                        <span class="nav-badge" id="invoicesBadge">0</span>
+                    </a>
+                    <a class="nav-item" data-page="clients" onclick="showPage('clients')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Clients
+                        <span class="nav-badge" id="clientsBadge">0</span>
+                    </a>
+                    <a class="nav-item" data-page="payments" onclick="showPage('payments')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Payments
+                    </a>
+                    <a class="nav-item" data-page="transactions" onclick="showPage('transactions')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        Transactions
+                    </a>
+                    <a class="nav-item" data-page="upwork" onclick="showPage('upwork')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        Upwork
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Intelligence</div>
+                    <a class="nav-item" data-page="analyser" onclick="showPage('analyser')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Analyser
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a class="nav-item" data-page="settings" onclick="showPage('settings')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Settings
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card" id="userBadge">
+                    <div class="user-avatar" id="userAvatar">?</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">Not signed in</div>
+                        <div class="user-email" id="userEmail">Sign in to sync</div>
+                    </div>
+                    <button class="sidebar-logout-btn" id="logoutBtn" onclick="signOut()" title="Sign out" style="display:none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
+                <div class="sync-status-bar" id="syncStatusBar">
+                    <span class="sync-status-text" id="syncStatusText">Not synced</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- Dashboard Page -->
+            <div class="page active" id="page-dashboard">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Dashboard</h2>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-primary" onclick="showPage('invoices'); openNewInvoice()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            New Invoice
+                        </button>
+                    </div>
+                </header>
+                <div class="content">
+                    <div class="stats-grid" id="dashboardStats"></div>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Recent Invoices</div>
+                                <a class="card-link" onclick="showPage('invoices')">View all</a>
+                            </div>
+                            <div class="card-body flush" id="recentInvoices"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Revenue by Client</div>
+                            </div>
+                            <div class="card-body" id="clientRevenue"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Page -->
+            <div class="page" id="page-invoices">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Invoices</h2>
+                    </div>
+                    <div class="header-right">
+                        <div class="btn-group">
+                            <button class="btn btn-secondary filter-btn active" data-filter="all" onclick="filterInvoices('all')">All</button>
+                            <button class="btn btn-secondary filter-btn" data-filter="pending" onclick="filterInvoices('pending')">Pending</button>
+                            <button class="btn btn-secondary filter-btn" data-filter="paid" onclick="filterInvoices('paid')">Paid</button>
+                        </div>
+                        <button class="btn btn-primary" onclick="openNewInvoice()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            New Invoice
+                        </button>
+                    </div>
+                </header>
+                <div class="content">
+                    <div class="card">
+                        <div class="card-body flush" id="invoicesList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Page -->
+            <div class="page" id="page-clients">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Clients</h2>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-primary" onclick="openNewClient()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            New Client
+                        </button>
+                    </div>
+                </header>
+                <div class="content">
+                    <div class="clients-grid" id="clientsGrid"></div>
+                </div>
+            </div>
+
+            <!-- Payments Page -->
+            <div class="page" id="page-payments">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Payment Tracking</h2>
+                    </div>
+                </header>
+                <div class="content">
+                    <div class="stats-grid" id="paymentStats"></div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Payment History</div>
+                        </div>
+                        <div class="card-body flush" id="paymentsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upwork Page -->
+            <div class="page" id="page-upwork">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Upwork Earnings</h2>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-primary" onclick="document.getElementById('upworkFile').click()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            Import Upwork CSV
+                        </button>
+                        <input type="file" id="upworkFile" accept=".csv" style="display:none" onchange="importUpworkCSV(event)">
+                    </div>
+                </header>
+                <div class="content">
+                    <div id="upworkSummary">
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            <p>Import your Upwork earnings CSV to see per-client breakdowns.</p>
+                            <p style="margin-top:8px;font-size:12px;color:var(--grey-400);">Go to Upwork → Reports → Transaction History → Download CSV</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Page -->
+            <div class="page" id="page-transactions">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Transactions</h2>
+                    </div>
+                    <div class="header-right">
+                        <div class="btn-group">
+                            <button class="btn btn-secondary filter-btn active" data-txfilter="all" onclick="filterTransactions('all')">All</button>
+                            <button class="btn btn-secondary filter-btn" data-txfilter="income" onclick="filterTransactions('income')">Income</button>
+                            <button class="btn btn-secondary filter-btn" data-txfilter="expense" onclick="filterTransactions('expense')">Expenses</button>
+                            <button class="btn btn-secondary filter-btn" data-txfilter="upwork" onclick="filterTransactions('upwork')">Upwork</button>
+                        </div>
+                        <select class="form-input" id="txPeriodFilter" onchange="renderTransactions()" style="width:140px;padding:8px 10px;font-size:12px;">
+                            <option value="all">All Time</option>
+                            <option value="thisMonth">This Month</option>
+                            <option value="lastMonth">Last Month</option>
+                            <option value="thisQuarter">This Quarter</option>
+                            <option value="thisYear">This Year</option>
+                            <option value="last6">Last 6 Months</option>
+                        </select>
+                    </div>
+                </header>
+                <div class="content">
+                    <div class="stats-grid" id="txStats"></div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Transaction Ledger</div>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input class="form-input" id="txSearch" placeholder="Search transactions..." oninput="renderTransactions()" style="width:200px;padding:8px 10px;font-size:12px;">
+                                <button class="btn btn-secondary btn-sm" onclick="exportTransactionsCSV()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body flush" id="txList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyser Page -->
+            <div class="page" id="page-analyser">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Business Analyser</h2>
+                    </div>
+                    <div class="header-right">
+                        <select class="form-input" id="analyserPeriod" onchange="renderAnalyser()" style="width:160px;padding:8px 10px;font-size:12px;">
+                            <option value="6">Last 6 Months</option>
+                            <option value="12" selected>Last 12 Months</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                </header>
+                <div class="content">
+                    <!-- KPI Row -->
+                    <div class="stats-grid" id="analyserKpis"></div>
+
+                    <!-- Revenue Chart -->
+                    <div class="grid-2" style="margin-bottom:20px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Monthly Revenue Trend</div>
+                            </div>
+                            <div class="card-body" id="revenueTrend" style="min-height:240px;"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Revenue by Source</div>
+                            </div>
+                            <div class="card-body" id="revenueBySource" style="min-height:240px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Projections -->
+                    <div class="card" style="margin-bottom:20px;">
+                        <div class="card-header">
+                            <div class="card-title">Revenue Projections</div>
+                            <span style="font-size:11px;color:var(--grey-500);">Based on historical trend analysis</span>
+                        </div>
+                        <div class="card-body" id="projections"></div>
+                    </div>
+
+                    <!-- Analysis Grid -->
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Client Concentration</div>
+                            </div>
+                            <div class="card-body" id="clientConcentration"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Payment Health</div>
+                            </div>
+                            <div class="card-body" id="paymentHealth"></div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Velocity & Insights -->
+                    <div class="grid-2" style="margin-top:20px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Invoice Velocity</div>
+                            </div>
+                            <div class="card-body" id="invoiceVelocity"></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Key Insights</div>
+                            </div>
+                            <div class="card-body" id="keyInsights"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page" id="page-settings">
+                <header class="header">
+                    <div class="header-left">
+                        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <h2 class="page-title">Settings</h2>
+                    </div>
+                </header>
+                <div class="content">
+                    <div class="settings-grid">
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Company Details</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Company Name</label>
+                                    <input class="form-input" id="settCompany" value="Exergy Designs">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input class="form-input" id="settEmail" value="shuaib@exergydesigns.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone</label>
+                                    <input class="form-input" id="settPhone" value="+27725739937">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Address</label>
+                                    <textarea class="form-input" id="settAddress" rows="2"></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Invoice Defaults</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Invoice Prefix</label>
+                                    <input class="form-input" id="settPrefix" value="EXD">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Default Currency</label>
+                                    <select class="form-input" id="settCurrency">
+                                        <option value="USD">USD - US Dollar</option>
+                                        <option value="ZAR">ZAR - South African Rand</option>
+                                        <option value="EUR">EUR - Euro</option>
+                                        <option value="GBP">GBP - British Pound</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+                                        Default Exchange Rate (to ZAR)
+                                        <button class="btn btn-sm btn-secondary" onclick="refreshSettingsExchangeRate()" type="button" style="padding:4px 10px;font-size:11px;">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                            Live Rate
+                                        </button>
+                                    </label>
+                                    <input class="form-input" id="settExRate" type="number" step="0.01" value="18.50">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Default Payment Terms</label>
+                                    <select class="form-input" id="settTerms">
+                                        <option value="3 days">3 Days</option>
+                                        <option value="7 days">7 Days</option>
+                                        <option value="14 days">14 Days</option>
+                                        <option value="30 days">30 Days</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Default Payment Method</label>
+                                    <select class="form-input" id="settPayMethod">
+                                        <option value="yoco">Yoco</option>
+                                        <option value="bank">Bank Transfer</option>
+                                        <option value="wise">Wise</option>
+                                        <option value="paypal">PayPal</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveSettings()">Save Defaults</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Bank Details (Standard Bank)</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Bank Name</label>
+                                    <input class="form-input" id="settBankName" value="Standard Bank">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Account Holder</label>
+                                    <input class="form-input" id="settBankHolder" value="Exergy Designs">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Account Number</label>
+                                        <input class="form-input" id="settBankAccNum" value="10195499563">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Branch Code</label>
+                                        <input class="form-input" id="settBankBranch" value="051001">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">SWIFT Code</label>
+                                    <input class="form-input" id="settBankSwift" value="SBZAZAJJ">
+                                </div>
+                                <button class="btn btn-primary" onclick="saveSettings()">Save Bank Details</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Wise Transfer Details</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Account Holder</label>
+                                    <input class="form-input" id="settWiseHolder" value="Shuaib Badat">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Wise Email</label>
+                                    <input class="form-input" id="settWiseEmail" value="shuaib@exergydesigns.com">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">IBAN</label>
+                                        <input class="form-input" id="settWiseIban" placeholder="BE/DE/etc IBAN...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Currency</label>
+                                        <select class="form-input" id="settWiseCurrency">
+                                            <option value="USD">USD</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="GBP">GBP</option>
+                                            <option value="ZAR">ZAR</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Account Number</label>
+                                        <input class="form-input" id="settWiseAccNum" placeholder="Wise account number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Routing Number</label>
+                                        <input class="form-input" id="settWiseRouting" placeholder="For USD wires">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">SWIFT/BIC</label>
+                                    <input class="form-input" id="settWiseSwift" placeholder="SWIFT code">
+                                </div>
+                                <button class="btn btn-primary" onclick="saveSettings()">Save Wise Details</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Yoco Integration</div></div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label" style="display:flex;align-items:center;gap:8px;">
+                                        <span>Auto-generate Payment Links</span>
+                                    </label>
+                                    <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+                                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                                            <input type="checkbox" id="settYocoEnabled" checked style="width:16px;height:16px;">
+                                            Enabled
+                                        </label>
+                                    </div>
+                                    <p style="font-size:12px;color:var(--grey-500);margin-top:8px;">When saving an invoice with Yoco payment method, a payment link will be auto-generated via the Yoco API.</p>
+                                </div>
+                                <button class="btn btn-secondary" onclick="syncYocoPayments()" style="margin-top:8px;">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    Sync Yoco Payments
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Data Management</div></div>
+                            <div class="card-body">
+                                <p style="font-size: 13px; color: var(--grey-500); margin-bottom: 16px;">Export or import your data as JSON files.</p>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button class="btn btn-secondary" onclick="exportData()">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        Export All
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        Import Data
+                                    </button>
+                                    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div class="card-title">Sync with Oracle</div></div>
+                            <div class="card-body">
+                                <p style="font-size: 13px; color: var(--grey-500); margin-bottom: 16px;">Import data from your Oracle JSON files.</p>
+                                <button class="btn btn-secondary" onclick="document.getElementById('oracleImport').click()">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    Import Oracle Data
+                                </button>
+                                <input type="file" id="oracleImport" accept=".json" multiple style="display:none" onchange="importOracleData(event)">
+                                <div id="syncStatus" style="margin-top: 12px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div class="modal-overlay" id="invoiceModalOverlay" onclick="closeInvoiceModal()"></div>
+    <div class="modal modal-lg" id="invoiceModal">
+        <div class="modal-header">
+            <h3 id="invoiceModalTitle">New Invoice</h3>
+            <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Invoice Number</label>
+                    <input class="form-input" id="invNumber" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input class="form-input" id="invDate" type="date">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Client</label>
+                    <select class="form-input" id="invClient" onchange="onClientSelect()">
+                        <option value="">Select client...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Terms</label>
+                    <select class="form-input" id="invTerms">
+                        <option value="3 days">3 Days</option>
+                        <option value="7 days">7 Days</option>
+                        <option value="14 days">14 Days</option>
+                        <option value="30 days">30 Days</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Currency</label>
+                    <select class="form-input" id="invCurrency" onchange="recalcInvoice()">
+                        <option value="USD">USD</option>
+                        <option value="ZAR">ZAR</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+                        Exchange Rate (to ZAR)
+                        <button class="btn btn-sm btn-secondary" onclick="updateExchangeRate()" type="button" style="padding:4px 10px;font-size:11px;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Live
+                        </button>
+                    </label>
+                    <input class="form-input" id="invExRate" type="number" step="0.01" value="18.50" onchange="recalcInvoice()">
+                </div>
+            </div>
+
+            <div style="margin: 20px 0 8px;">
+                <label class="form-label" style="margin-bottom:12px;">Line Items</label>
+                <div id="lineItems"></div>
+                <button class="btn btn-secondary btn-sm" onclick="addLineItem()" style="margin-top:8px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Add Line
+                </button>
+            </div>
+
+            <div class="invoice-totals">
+                <div class="total-row">
+                    <span>Subtotal</span>
+                    <span id="invSubtotal" class="mono">0.00</span>
+                </div>
+                <div class="total-row total-final">
+                    <span>ZAR Total</span>
+                    <span id="invZarTotal" class="mono">R 0.00</span>
+                </div>
+            </div>
+
+            <div class="form-row" style="margin-top:16px;">
+                <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-input" id="invPayMethod">
+                        <option value="yoco">Yoco</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="wise">Wise</option>
+                        <option value="paypal">PayPal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Link</label>
+                    <input class="form-input" id="invPayLink" placeholder="https://...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Remarks</label>
+                <textarea class="form-input" id="invRemarks" rows="2" placeholder="Additional notes..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+            <button class="btn btn-secondary" id="btnPreview" onclick="previewInvoice()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                Preview
+            </button>
+            <button class="btn btn-primary" onclick="saveInvoice()">Save Invoice</button>
+        </div>
+    </div>
+
+    <!-- Client Modal -->
+    <div class="modal-overlay" id="clientModalOverlay" onclick="closeClientModal()"></div>
+    <div class="modal" id="clientModal">
+        <div class="modal-header">
+            <h3 id="clientModalTitle">New Client</h3>
+            <button class="modal-close" onclick="closeClientModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input class="form-input" id="cliName" placeholder="Full name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Company</label>
+                <input class="form-input" id="cliCompany" placeholder="Company name">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" id="cliEmail" type="email" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input class="form-input" id="cliPhone" placeholder="+27...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea class="form-input" id="cliAddress" rows="2" placeholder="Full address"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">VAT Number</label>
+                <input class="form-input" id="cliVat" placeholder="VAT number (optional)">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeClientModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
+        </div>
+    </div>
+
+    <!-- Invoice Preview / Print Modal -->
+    <div class="modal-overlay" id="previewOverlay" onclick="closePreview()"></div>
+    <div class="modal modal-lg" id="previewModal" style="max-width:800px;">
+        <div class="modal-header">
+            <h3>Invoice Preview</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-secondary btn-sm" onclick="printInvoice()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Print / PDF
+                </button>
+                <button class="modal-close" onclick="closePreview()">&times;</button>
+            </div>
+        </div>
+        <div class="modal-body" style="padding:0;">
+            <div id="invoicePrintArea"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+    <script src="seed-data.js"></script>
+</body>
+</html>
