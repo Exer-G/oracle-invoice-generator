@@ -1639,9 +1639,19 @@ function previewInvoice() {
     openModal('previewModal', 'previewOverlay');
 }
 
-function previewInvoiceById(id) {
+async function previewInvoiceById(id) {
     const inv = state.invoices.find(i => String(i.id) === String(id));
     if (!inv) return;
+
+    // If Yoco invoice with no link, try to generate one first
+    if (inv.paymentMethod === "yoco" && !inv.paymentLink && inv.zarTotal > 0 && state.settings.yocoEnabled) {
+        const url = await createYocoPaymentLink(inv.zarTotal, inv.invoiceNumber, inv.client?.name || "");
+        if (url) {
+            inv.paymentLink = url;
+            saveState("invoices");
+        }
+    }
+
     renderInvoicePrint(inv);
     openModal('previewModal', 'previewOverlay');
 }
@@ -1740,7 +1750,16 @@ function renderInvoicePrint(inv) {
             <div class="inv-payment-info">
                 <h4>Payment Information</h4>
                 ${inv.paymentMethod ? `<p><strong>Method:</strong> ${inv.paymentMethod.charAt(0).toUpperCase() + inv.paymentMethod.slice(1)}</p>` : ''}
-                ${inv.paymentLink ? `<p><strong>Pay online:</strong> <a href="${inv.paymentLink}" target="_blank" style="color:var(--info);text-decoration:underline;">${inv.paymentLink}</a></p>` : ''}
+                ${inv.paymentMethod === "yoco" && inv.paymentLink ? `
+                    <div style="margin-top:20px;text-align:center;">
+                        <a href="${inv.paymentLink}" target="_blank"
+                           style="display:inline-block;background:#000;color:#fff;padding:14px 40px;border-radius:8px;font-weight:600;font-size:15px;text-decoration:none;letter-spacing:0.3px;">
+                            💳 Pay Now — R ${(inv.zarTotal || 0).toLocaleString("en-ZA", {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </a>
+                        <p style="font-size:11px;color:#999;margin-top:8px;">Secure payment via Yoco</p>
+                    </div>
+                ` : ""}
+                ${inv.paymentLink && inv.paymentMethod !== "yoco" ? `<p><strong>Pay online:</strong> <a href="${inv.paymentLink}" target="_blank" style="color:var(--info);text-decoration:underline;">${inv.paymentLink}</a></p>` : ''}
                 ${inv.paymentMethod === 'bank' || inv.paymentMethod === 'yoco' ? `
                     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--grey-200);">
                         <p style="margin-bottom:4px;"><strong>Bank Transfer Details:</strong></p>
@@ -1770,6 +1789,67 @@ function renderInvoicePrint(inv) {
 
 function printInvoice() {
     window.print();
+}
+
+function saveInvoiceAsHTML() {
+    const printArea = document.getElementById("invoicePrintArea");
+    if (!printArea) return;
+
+    const invoiceCSS = `
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background: #f9fafb; }
+        .invoice-print { max-width: 800px; margin: 40px auto; background: white; padding: 48px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        .inv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid #f3f4f6; }
+        .inv-brand { display: flex; align-items: center; gap: 14px; }
+        .inv-brand-icon { width: 48px; height: 48px; background: #000; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; }
+        .inv-brand-text h2 { margin: 0; font-size: 20px; font-weight: 700; color: #111827; }
+        .inv-brand-text p { margin: 2px 0 0; font-size: 12px; color: #6b7280; }
+        .inv-title h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; color: #111827; }
+        .inv-number { font-size: 14px; color: #6b7280; margin-top: 4px; font-family: monospace; }
+        .inv-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
+        .inv-meta-section h4 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #9ca3af; margin: 0 0 10px; }
+        .inv-meta-section p { margin: 0; font-size: 13px; line-height: 1.7; color: #374151; }
+        .inv-details { display: flex; gap: 32px; margin-bottom: 32px; padding: 16px; background: #f9fafb; border-radius: 8px; }
+        .inv-detail-item { display: flex; flex-direction: column; gap: 2px; }
+        .inv-detail-item label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.5px; }
+        .inv-detail-item span { font-size: 13px; font-weight: 500; color: #111827; }
+        .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+        .inv-table th { background: #f3f4f6; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
+        .inv-table td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #374151; }
+        .inv-totals { display: flex; justify-content: flex-end; margin-bottom: 32px; }
+        .inv-totals-box { min-width: 280px; }
+        .inv-total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6; }
+        .inv-total-final { font-weight: 700; font-size: 16px !important; color: #111827 !important; padding-top: 12px !important; border-bottom: none !important; }
+        .inv-footer { margin-bottom: 32px; padding: 16px; background: #fafafa; border-radius: 8px; font-size: 13px; color: #6b7280; }
+        .inv-payment-info { padding-top: 24px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #374151; }
+        .inv-payment-info h4 { font-size: 13px; font-weight: 600; margin: 0 0 12px; color: #111827; }
+        .inv-payment-info p { margin: 4px 0; }
+        @media print { body { background: white; } .invoice-print { box-shadow: none; margin: 0; } }
+    `;
+
+    const htmlContent = printArea.innerHTML;
+    const invoiceNumber = htmlContent.match(/class="inv-number">([^<]+)</)?.[1] || "invoice";
+
+    const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - Exergy Designs</title>
+    <style>${invoiceCSS}</style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+
+    const blob = new Blob([fullHTML], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `invoice-${invoiceNumber.replace(/[^a-zA-Z0-9-]/g, "-")}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Invoice saved as HTML", "success");
 }
 
 // ============ SETTINGS ============
